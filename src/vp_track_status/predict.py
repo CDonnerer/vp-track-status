@@ -12,7 +12,7 @@ from vp_track_status.constants import (
     MODEL_FILE,
     RAINFALL_FILE,
 )
-from vp_track_status.model import add_rolling_features
+from vp_track_status.features import add_rolling_features
 
 
 def predict_current_condition(

@@ -4,7 +4,7 @@ Predict track running conditions at Victoria Park, London based on rainfall data
 
 ## Project Overview
 
-This project fetches rainfall data from the UK Environment Agency Flood Monitoring API, aggregates it daily, and will eventually use machine learning to predict track conditions (Dry/Some puddles/Lots of puddles). The system is designed to run automatically via GitHub Actions, updating data daily.
+This project fetches rainfall data from the UK Environment Agency Flood Monitoring API, aggregates it daily, and uses machine learning to predict track conditions (Dry/Some puddles/Lots of puddles). The system runs automatically via GitHub Actions, updating data and predictions daily, and publishes results to a GitHub Pages website.
 
 ## Project Structure
 
@@ -40,25 +40,24 @@ uv run vp-track-status --help
 
 ## Usage
 
-### Fetch Rainfall Data
+### Command-Line Interface
 
-The package provides a CLI for fetching rainfall data:
+The package provides a comprehensive CLI:
 
 ```bash
-# Fetch latest 7 days (default)
-uv run vp-track-status fetch
+# Fetch rainfall data
+uv run vp-track-status fetch                    # Latest 7 days (default)
+uv run vp-track-status fetch --days 30          # Latest 30 days
+uv run vp-track-status fetch --mode historical  # Historical data
 
-# Fetch latest 30 days
-uv run vp-track-status fetch --days 30
+# Train the prediction model
+uv run vp-track-status train
 
-# Fetch historical data (defaults to last 90 days)
-uv run vp-track-status fetch --mode historical
+# Generate track condition prediction
+uv run vp-track-status predict
 
-# Fetch specific date range
-uv run vp-track-status fetch --mode historical --start-date 2024-01-01 --end-date 2024-12-31
-
-# Custom output location
-uv run vp-track-status fetch --output data/rainfall/custom.csv
+# Generate static website
+uv run vp-track-status generate-site
 ```
 
 ### Using as a Python Module
@@ -75,16 +74,30 @@ df = fetch_and_update(
 )
 ```
 
-## Automated Data Updates
+## Automated Updates & Deployment
 
-The project includes a GitHub Actions workflow (`.github/workflows/update_data.yml`) that:
+The project includes two GitHub Actions workflows:
 
+### Data Update (`.github/workflows/update_data.yml`)
 1. Runs daily at 6 AM UTC
 2. Fetches the latest 7 days of rainfall data
 3. Updates the CSV file in `data/rainfall/`
 4. Commits changes back to the repository
 
-The workflow can also be triggered manually via the Actions tab on GitHub.
+### Website Deployment (`.github/workflows/deploy_website.yml`)
+1. Runs daily at 7 AM UTC (after data update)
+2. Generates prediction for current track conditions
+3. Creates static HTML website
+4. Deploys to GitHub Pages
+
+Both workflows can be triggered manually via the Actions tab on GitHub.
+
+### GitHub Pages Setup
+
+To enable the website:
+1. Go to repository Settings → Pages
+2. Under "Build and deployment", select "GitHub Actions" as the source
+3. The website will be available at `https://<username>.github.io/<repository>/`
 
 ## Data Sources
 

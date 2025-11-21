@@ -8,28 +8,7 @@ from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 
 from vp_track_status.constants import FEATURE_COLS, LABEL_MAPPING_INVERSE
-
-
-def add_rolling_features(df_rain):
-    return df_rain.with_columns(
-        [
-            pl.col("rainfall_mm")
-            .rolling_sum(window_size=1, min_samples=1)
-            .alias("rain_1d"),
-            pl.col("rainfall_mm")
-            .rolling_sum(window_size=2, min_samples=1)
-            .alias("rain_2d"),
-            pl.col("rainfall_mm")
-            .rolling_sum(window_size=3, min_samples=1)
-            .alias("rain_3d"),
-            pl.col("rainfall_mm")
-            .rolling_sum(window_size=5, min_samples=1)
-            .alias("rain_5d"),
-            pl.col("rainfall_mm")
-            .rolling_sum(window_size=7, min_samples=1)
-            .alias("rain_7d"),
-        ]
-    )
+from vp_track_status.features import add_rolling_features
 
 
 def load_and_prepare_data(rainfall_file, observations_file):
