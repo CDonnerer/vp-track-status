@@ -25,9 +25,15 @@ def generate_html(prediction_result, rainfall_data):
         "Some puddles": "🌧️",
         "Lots puddles": "💧",
     }
+    condition_descriptions = {
+        "Dry": "Good conditions to run workout on the athletics track.",
+        "Some puddles": "Possible to run workout on the athletics track, but you will likely have to dodge puddles and swerve lanes.",
+        "Lots puddles": "The athletics track is very water logged, you might as well run in your bathtub.",
+    }
 
     color = condition_colors.get(condition, "#6b7280")
     emoji = condition_emoji.get(condition, "")
+    description = condition_descriptions.get(condition, "")
 
     recent_rain = (
         rainfall_data.tail(7)
@@ -100,6 +106,16 @@ def generate_html(prediction_result, rainfall_data):
             margin-top: 10px;
             opacity: 0.9;
             font-size: 0.9em;
+        }}
+        .status-description {{
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #374151;
+            font-size: 1.05em;
+            line-height: 1.6;
         }}
         .section {{
             margin-bottom: 25px;
@@ -174,6 +190,10 @@ def generate_html(prediction_result, rainfall_data):
             <div class="status-emoji">{emoji}</div>
             <div class="status-text">{condition}</div>
             <div class="status-date">Prediction for {date}</div>
+        </div>
+
+        <div class="status-description">
+            {description}
         </div>
 
         <div class="section">
