@@ -23,6 +23,28 @@ def fetch_command(args):
         sys.exit(1)
 
 
+def train_command(args):
+    """Handle the train subcommand."""
+    try:
+        from vp_track_status.model import train_and_export
+
+        train_and_export(
+            rainfall_file=args.rainfall,
+            observations_file=args.observations,
+            output_path=args.output,
+        )
+    except ImportError:
+        print(
+            "\nERROR: Training dependencies not installed. "
+            "Install with: uv sync --group train",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except Exception as e:
+        print(f"\nERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -66,6 +88,25 @@ def main():
         help="Number of days to fetch in 'latest' mode (default: 7)",
     )
     fetch_parser.set_defaults(func=fetch_command)
+
+    # Train command
+    train_parser = subparsers.add_parser("train", help="Train and export model to ONNX")
+    train_parser.add_argument(
+        "--rainfall",
+        default="data/rainfall/rainfall_239374TP_daily.csv",
+        help="Path to rainfall CSV file (default: data/rainfall/rainfall_239374TP_daily.csv)",
+    )
+    train_parser.add_argument(
+        "--observations",
+        default="data/observations/track_observations.csv",
+        help="Path to observations CSV file (default: data/observations/track_observations.csv)",
+    )
+    train_parser.add_argument(
+        "--output",
+        default="data/models/track_condition_model.onnx",
+        help="Output path for ONNX model (default: data/models/track_condition_model.onnx)",
+    )
+    train_parser.set_defaults(func=train_command)
 
     args = parser.parse_args()
 
