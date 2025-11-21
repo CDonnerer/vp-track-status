@@ -26,7 +26,7 @@ def generate_html(prediction_result, rainfall_data):
         "Lots puddles": "💧",
     }
     condition_descriptions = {
-        "Dry": "Good conditions to run workout on the athletics track.",
+        "Dry": "Good conditions to run a workout on the athletics track.",
         "Some puddles": "Possible to run workout on the athletics track, but you will likely have to dodge puddles and swerve lanes.",
         "Lots puddles": "The athletics track is very water logged, you might as well run in your bathtub.",
     }
