@@ -8,12 +8,8 @@ from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 
 
-def load_and_prepare_data(rainfall_file, observations_file):
-    """Load rainfall and observation data, create features, and join."""
-    df_rain = pl.read_csv(rainfall_file)
-    df_rain = df_rain.with_columns(pl.col("date").str.to_date()).sort("date")
-
-    df_rain = df_rain.with_columns(
+def add_rolling_features(df_rain):
+    return df_rain.with_columns(
         [
             pl.col("rainfall_mm")
             .rolling_sum(window_size=1, min_samples=1)
@@ -32,6 +28,12 @@ def load_and_prepare_data(rainfall_file, observations_file):
             .alias("rain_7d"),
         ]
     )
+
+
+def load_and_prepare_data(rainfall_file, observations_file):
+    df_rain = pl.read_csv(rainfall_file)
+    df_rain = df_rain.with_columns(pl.col("date").str.to_date()).sort("date")
+    df_rain = add_rolling_features(df_rain)
 
     df_obs = pl.read_csv(observations_file)
     df_obs = df_obs.with_columns(

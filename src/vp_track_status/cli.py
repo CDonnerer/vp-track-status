@@ -45,6 +45,26 @@ def train_command(args):
         sys.exit(1)
 
 
+def predict_command(args):
+    """Handle the predict subcommand."""
+    try:
+        from vp_track_status.predict import predict_current_condition
+
+        result = predict_current_condition(
+            model_path=args.model,
+            rainfall_file=args.rainfall,
+        )
+
+        print(f"\nTrack Condition Prediction for {result['date']}")
+        print(f"Prediction: {result['prediction_label']}")
+        print("\nFeatures used:")
+        for feature, value in result["features"].items():
+            print(f"  {feature}: {value:.2f}mm")
+    except Exception as e:
+        print(f"\nERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -107,6 +127,22 @@ def main():
         help="Output path for ONNX model (default: data/models/track_condition_model.onnx)",
     )
     train_parser.set_defaults(func=train_command)
+
+    # Predict command
+    predict_parser = subparsers.add_parser(
+        "predict", help="Predict current track condition"
+    )
+    predict_parser.add_argument(
+        "--model",
+        default="data/models/track_condition_model.onnx",
+        help="Path to ONNX model file (default: data/models/track_condition_model.onnx)",
+    )
+    predict_parser.add_argument(
+        "--rainfall",
+        default="data/rainfall/rainfall_239374TP_daily.csv",
+        help="Path to rainfall CSV file (default: data/rainfall/rainfall_239374TP_daily.csv)",
+    )
+    predict_parser.set_defaults(func=predict_command)
 
     args = parser.parse_args()
 
