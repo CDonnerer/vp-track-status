@@ -3,7 +3,13 @@
 import argparse
 import sys
 
-from vp_track_status.rainfall import fetch_and_update, DEFAULT_STATION_ID
+from vp_track_status.constants import (
+    DEFAULT_STATION_ID,
+    MODEL_FILE,
+    OBSERVATIONS_FILE,
+    RAINFALL_FILE,
+)
+from vp_track_status.rainfall import fetch_and_update
 
 
 def fetch_command(args):
@@ -90,8 +96,8 @@ def main():
     )
     fetch_parser.add_argument(
         "--output",
-        default="data/rainfall/rainfall_239374TP_daily.csv",
-        help="Output CSV file path (default: data/rainfall/rainfall_239374TP_daily.csv)",
+        default=str(RAINFALL_FILE),
+        help=f"Output CSV file path (default: {RAINFALL_FILE})",
     )
     fetch_parser.add_argument(
         "--start-date",
@@ -113,18 +119,18 @@ def main():
     train_parser = subparsers.add_parser("train", help="Train and export model to ONNX")
     train_parser.add_argument(
         "--rainfall",
-        default="data/rainfall/rainfall_239374TP_daily.csv",
-        help="Path to rainfall CSV file (default: data/rainfall/rainfall_239374TP_daily.csv)",
+        default=str(RAINFALL_FILE),
+        help=f"Path to rainfall CSV file (default: {RAINFALL_FILE})",
     )
     train_parser.add_argument(
         "--observations",
-        default="data/observations/track_observations.csv",
-        help="Path to observations CSV file (default: data/observations/track_observations.csv)",
+        default=str(OBSERVATIONS_FILE),
+        help=f"Path to observations CSV file (default: {OBSERVATIONS_FILE})",
     )
     train_parser.add_argument(
         "--output",
-        default="data/models/track_condition_model.onnx",
-        help="Output path for ONNX model (default: data/models/track_condition_model.onnx)",
+        default=str(MODEL_FILE),
+        help=f"Output path for ONNX model (default: {MODEL_FILE})",
     )
     train_parser.set_defaults(func=train_command)
 
@@ -134,13 +140,13 @@ def main():
     )
     predict_parser.add_argument(
         "--model",
-        default="data/models/track_condition_model.onnx",
-        help="Path to ONNX model file (default: data/models/track_condition_model.onnx)",
+        default=str(MODEL_FILE),
+        help=f"Path to ONNX model file (default: {MODEL_FILE})",
     )
     predict_parser.add_argument(
         "--rainfall",
-        default="data/rainfall/rainfall_239374TP_daily.csv",
-        help="Path to rainfall CSV file (default: data/rainfall/rainfall_239374TP_daily.csv)",
+        default=str(RAINFALL_FILE),
+        help=f"Path to rainfall CSV file (default: {RAINFALL_FILE})",
     )
     predict_parser.set_defaults(func=predict_command)
 

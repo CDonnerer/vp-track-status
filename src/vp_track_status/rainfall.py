@@ -10,10 +10,12 @@ from pathlib import Path
 import polars as pl
 import requests
 
-# --- Configuration ---
-PARAMETER = "rainfall"
-ROOT_URL = "https://environment.data.gov.uk/flood-monitoring"
-DEFAULT_STATION_ID = "239374TP"
+from vp_track_status.constants import (
+    DEFAULT_STATION_ID,
+    PARAMETER,
+    RAINFALL_FILE,
+    ROOT_URL,
+)
 
 
 def get_station_measures(station_id):
@@ -188,7 +190,7 @@ def save_data(df, output_file, verbose=True):
 
 def fetch_and_update(
     station_id=DEFAULT_STATION_ID,
-    output_file="data/rainfall/rainfall_239374TP_daily.csv",
+    output_file=None,
     mode="latest",
     days=7,
     start_date=None,
@@ -210,7 +212,9 @@ def fetch_and_update(
     Returns:
         Final DataFrame after update
     """
-    # Determine date range
+    if output_file is None:
+        output_file = str(RAINFALL_FILE)
+
     today = date.today()
     end_date = end_date if end_date else str(today)
 

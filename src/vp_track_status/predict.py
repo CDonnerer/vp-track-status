@@ -6,18 +6,25 @@ import numpy as np
 import onnxruntime as ort
 import polars as pl
 
+from vp_track_status.constants import (
+    FEATURE_COLS,
+    LABEL_MAPPING,
+    MODEL_FILE,
+    RAINFALL_FILE,
+)
 from vp_track_status.model import add_rolling_features
 
 
-LABEL_MAPPING = {0: "Dry", 1: "Some puddles", 2: "Lots puddles"}
-FEATURE_COLS = ["rain_1d", "rain_2d", "rain_3d", "rain_5d", "rain_7d"]
-
-
 def predict_current_condition(
-    model_path="data/models/track_condition_model.onnx",
-    rainfall_file="data/rainfall/rainfall_239374TP_daily.csv",
+    model_path=None,
+    rainfall_file=None,
 ):
     """Predict current track condition based on latest rainfall data."""
+    if model_path is None:
+        model_path = str(MODEL_FILE)
+    if rainfall_file is None:
+        rainfall_file = str(RAINFALL_FILE)
+
     if not Path(model_path).exists():
         raise FileNotFoundError(f"Model not found at {model_path}")
     if not Path(rainfall_file).exists():

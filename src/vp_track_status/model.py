@@ -7,6 +7,8 @@ from sklearn.linear_model import LogisticRegression
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 
+from vp_track_status.constants import FEATURE_COLS, LABEL_MAPPING_INVERSE
+
 
 def add_rolling_features(df_rain):
     return df_rain.with_columns(
@@ -42,9 +44,8 @@ def load_and_prepare_data(rainfall_file, observations_file):
 
     df = df_rain.join(df_obs, on="date", how="inner").sort("date")
 
-    label_mapping = {"Dry": 0, "Some puddles": 1, "Lots puddles": 2}
     df = df.with_columns(
-        pl.col("State of the track").replace(label_mapping).alias("target")
+        pl.col("State of the track").replace(LABEL_MAPPING_INVERSE).alias("target")
     )
 
     return df
@@ -53,7 +54,7 @@ def load_and_prepare_data(rainfall_file, observations_file):
 def train_model(df, feature_cols=None):
     """Train logistic regression model on all data."""
     if feature_cols is None:
-        feature_cols = ["rain_1d", "rain_2d", "rain_3d", "rain_5d", "rain_7d"]
+        feature_cols = FEATURE_COLS
 
     X = df.select(feature_cols).to_numpy()
     y = df.select("target").to_numpy().ravel()
