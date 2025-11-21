@@ -1,13 +1,20 @@
 [project]
 name = "vp-track-status"
 version = "0.1.0"
-description = "Add your description here"
+description = "Victoria Park Track Status - Predict track running conditions based on rainfall data"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "polars>=1.18.0",
     "requests>=2.32.5",
 ]
+
+[project.scripts]
+vp-track-status = "vp_track_status.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
