@@ -71,6 +71,19 @@ def predict_command(args):
         sys.exit(1)
 
 
+def generate_site_command(args):
+    """Handle the generate-site subcommand."""
+    try:
+        from vp_track_status.website import generate_site
+
+        output_file = generate_site(output_dir=args.output_dir)
+        print("\nWebsite generated successfully!")
+        print(f"Output: {output_file}")
+    except Exception as e:
+        print(f"\nERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -149,6 +162,17 @@ def main():
         help=f"Path to rainfall CSV file (default: {RAINFALL_FILE})",
     )
     predict_parser.set_defaults(func=predict_command)
+
+    # Generate site command
+    site_parser = subparsers.add_parser(
+        "generate-site", help="Generate static website with current conditions"
+    )
+    site_parser.add_argument(
+        "--output-dir",
+        default="docs",
+        help="Output directory for website (default: docs)",
+    )
+    site_parser.set_defaults(func=generate_site_command)
 
     args = parser.parse_args()
 

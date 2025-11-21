@@ -64,20 +64,23 @@ lefthook install
 
 ### Command-Line Interface
 
-The package provides a CLI for fetching rainfall data:
+The package provides a CLI for data fetching, model training, prediction, and website generation:
 
 ```bash
-# Fetch latest 7 days (default)
-uv run vp-track-status fetch
+# Fetch latest rainfall data
+uv run vp-track-status fetch                    # Latest 7 days (default)
+uv run vp-track-status fetch --days 30          # Latest 30 days
+uv run vp-track-status fetch --mode historical  # Historical (90 days default)
 
-# Fetch latest 30 days
-uv run vp-track-status fetch --days 30
+# Train model
+uv run vp-track-status train
 
-# Fetch historical data (defaults to last 90 days)
-uv run vp-track-status fetch --mode historical
+# Generate prediction
+uv run vp-track-status predict
 
-# Fetch specific date range
-uv run vp-track-status fetch --mode historical --start-date 2024-01-01 --end-date 2024-12-31
+# Generate static website
+uv run vp-track-status generate-site
+uv run vp-track-status generate-site --output-dir custom/path
 ```
 
 ### Python Module Usage
@@ -115,6 +118,18 @@ The main package (`src/vp_track_status/`) provides:
    - Updates `data/rainfall/rainfall_239374TP_daily.csv`
    - Commits changes back to repository
 
+3. **Model Training & Prediction** (`model.py`, `predict.py`)
+   - Train models using rainfall data and manual observations
+   - Exports model to ONNX format for deployment
+   - Generates predictions for current track conditions
+   - Uses rolling window features (1d, 2d, 3d, 5d, 7d rainfall)
+
+4. **Website Generation** (`website.py`, `.github/workflows/deploy_website.yml`)
+   - Generates static HTML website displaying current track conditions
+   - Deployed to GitHub Pages automatically
+   - Updates daily after rainfall data fetch (7 AM UTC)
+   - Shows prediction, recent rainfall, and last update time
+
 ### Legacy Scripts
 
 Root-level scripts are legacy code from initial development:
@@ -123,18 +138,25 @@ Root-level scripts are legacy code from initial development:
 - `create_dataset.py`: ML training pipeline (uses pandas, not integrated with new package)
 - `maps.py`: Experimental Sentinel-1 satellite imagery tools
 
-### Future: ML Pipeline
+### GitHub Pages Deployment
 
-The ML pipeline will:
-1. Aggregate rainfall data with rolling window features (1-day, 2-day, 3-day, 5-day)
-2. Join with manual track observations from `data/observations/track_observations.csv`
-3. Train model to predict track conditions:
-   - "Dry" → 0
-   - "Some puddles" → 1§
-   - "Lots puddles" → 2
-4. Generate predictions in `data/predictions/`
+The project uses GitHub Pages to serve a static website showing current track conditions:
 
-See `create_dataset.py` for prototype implementation.
+1. **Setup** (one-time):
+   - Go to repository Settings → Pages
+   - Under "Build and deployment", select "GitHub Actions" as the source
+   - The deploy_website.yml workflow will handle deployment
+
+2. **Automated deployment**:
+   - Runs daily at 7 AM UTC (after data update at 6 AM UTC)
+   - Triggers automatically when data update workflow completes
+   - Can be manually triggered via "Actions" tab
+
+3. **Local testing**:
+   ```bash
+   uv run vp-track-status generate-site
+   open docs/index.html  # View locally
+   ```
 
 ## Data Sources
 
