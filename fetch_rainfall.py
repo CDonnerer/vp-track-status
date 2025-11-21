@@ -93,10 +93,16 @@ def fetch_rainfall_data(station_id, start_date, end_date):
         print("\nWARNING: No readings returned for this period")
         if earliest_available and latest_available:
             if start_date < earliest_available:
-                print(f"  → Requested start date ({start_date}) is before earliest available data ({earliest_available})")
+                print(
+                    f"  → Requested start date ({start_date}) is before earliest available data ({earliest_available})"
+                )
             if end_date > latest_available:
-                print(f"  → Requested end date ({end_date}) is after latest available data ({latest_available})")
-            print(f"\n  Try using dates between {earliest_available} and {latest_available}")
+                print(
+                    f"  → Requested end date ({end_date}) is after latest available data ({latest_available})"
+                )
+            print(
+                f"\n  Try using dates between {earliest_available} and {latest_available}"
+            )
         return pl.DataFrame(schema={"dateTime": pl.Utf8, "value": pl.Float64})
 
     df = pl.DataFrame(all_readings)
@@ -114,10 +120,14 @@ def aggregate_daily(df):
         return pl.DataFrame(schema={"date": pl.Date, "rainfall_mm": pl.Float64})
 
     daily = (
-        df.with_columns([
-            pl.col("dateTime").str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%SZ").alias("dateTime"),
-            pl.col("value").cast(pl.Float64, strict=False).alias("value")
-        ])
+        df.with_columns(
+            [
+                pl.col("dateTime")
+                .str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%SZ")
+                .alias("dateTime"),
+                pl.col("value").cast(pl.Float64, strict=False).alias("value"),
+            ]
+        )
         .drop_nulls(subset=["value", "dateTime"])
         .with_columns(pl.col("dateTime").dt.date().alias("date"))
         .group_by("date")
@@ -225,9 +235,9 @@ def main():
     else:  # latest mode
         start_date = str(today - timedelta(days=args.days))
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Rainfall Data Fetch - {args.mode.upper()} mode")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     try:
         # Fetch raw data
@@ -267,9 +277,9 @@ def main():
         print("\nMost recent data:")
         print(final_df.tail(10))
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("SUCCESS")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
     except Exception as e:
         print(f"\nERROR: {e}", file=sys.stderr)
