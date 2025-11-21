@@ -3,7 +3,13 @@
 import argparse
 import sys
 
-from vp_track_status.rainfall import fetch_and_update, DEFAULT_STATION_ID
+from vp_track_status.constants import (
+    DEFAULT_STATION_ID,
+    MODEL_FILE,
+    OBSERVATIONS_FILE,
+    RAINFALL_FILE,
+)
+from vp_track_status.rainfall import fetch_and_update
 
 
 def fetch_command(args):
@@ -45,6 +51,26 @@ def train_command(args):
         sys.exit(1)
 
 
+def predict_command(args):
+    """Handle the predict subcommand."""
+    try:
+        from vp_track_status.predict import predict_current_condition
+
+        result = predict_current_condition(
+            model_path=args.model,
+            rainfall_file=args.rainfall,
+        )
+
+        print(f"\nTrack Condition Prediction for {result['date']}")
+        print(f"Prediction: {result['prediction_label']}")
+        print("\nFeatures used:")
+        for feature, value in result["features"].items():
+            print(f"  {feature}: {value:.2f}mm")
+    except Exception as e:
+        print(f"\nERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -70,8 +96,8 @@ def main():
     )
     fetch_parser.add_argument(
         "--output",
-        default="data/rainfall/rainfall_239374TP_daily.csv",
-        help="Output CSV file path (default: data/rainfall/rainfall_239374TP_daily.csv)",
+        default=str(RAINFALL_FILE),
+        help=f"Output CSV file path (default: {RAINFALL_FILE})",
     )
     fetch_parser.add_argument(
         "--start-date",
@@ -93,20 +119,36 @@ def main():
     train_parser = subparsers.add_parser("train", help="Train and export model to ONNX")
     train_parser.add_argument(
         "--rainfall",
-        default="data/rainfall/rainfall_239374TP_daily.csv",
-        help="Path to rainfall CSV file (default: data/rainfall/rainfall_239374TP_daily.csv)",
+        default=str(RAINFALL_FILE),
+        help=f"Path to rainfall CSV file (default: {RAINFALL_FILE})",
     )
     train_parser.add_argument(
         "--observations",
-        default="data/observations/track_observations.csv",
-        help="Path to observations CSV file (default: data/observations/track_observations.csv)",
+        default=str(OBSERVATIONS_FILE),
+        help=f"Path to observations CSV file (default: {OBSERVATIONS_FILE})",
     )
     train_parser.add_argument(
         "--output",
-        default="data/models/track_condition_model.onnx",
-        help="Output path for ONNX model (default: data/models/track_condition_model.onnx)",
+        default=str(MODEL_FILE),
+        help=f"Output path for ONNX model (default: {MODEL_FILE})",
     )
     train_parser.set_defaults(func=train_command)
+
+    # Predict command
+    predict_parser = subparsers.add_parser(
+        "predict", help="Predict current track condition"
+    )
+    predict_parser.add_argument(
+        "--model",
+        default=str(MODEL_FILE),
+        help=f"Path to ONNX model file (default: {MODEL_FILE})",
+    )
+    predict_parser.add_argument(
+        "--rainfall",
+        default=str(RAINFALL_FILE),
+        help=f"Path to rainfall CSV file (default: {RAINFALL_FILE})",
+    )
+    predict_parser.set_defaults(func=predict_command)
 
     args = parser.parse_args()
 
