@@ -1,35 +1,14 @@
 # Victoria Park Track Status
 
-**View current track conditions: [https://cdonnerer.github.io/vp-track-status/](https://cdonnerer.github.io/vp-track-status/)**
+Predicts running conditions at Victoria Park Athletics Track based on rainfall.
 
-Predicts running conditions at the Victoria Park Athletics Track.
+**[View current track conditions →](https://cdonnerer.github.io/vp-track-status/)**
 
-## Installation
+## How It Works
 
-```bash
-uv sync
-```
-
-## Usage
-
-```bash
-# Fetch rainfall data
-uv run vp-track-status fetch
-
-# Train model
-uv run vp-track-status train
-
-# Generate prediction
-uv run vp-track-status predict
-
-# Generate website
-uv run vp-track-status generate-site
-```
-
-## Data Sources
-
-- **Rainfall**: UK Environment Agency Flood Monitoring API (Station 239374TP, Victoria Park)
-- **Track Observations**: Manual observations stored in `data/observations/`
+- **Data**: Rainfall from UK Environment Agency API (Station 239374TP) + manual track observations
+- **Model**: ML model predicting track conditions (Dry/Some puddles/Lots of puddles) from rolling rainfall features
+- **Updates**: Automated daily at 6 AM UTC via GitHub Actions
 
 ## Development
 
@@ -39,4 +18,9 @@ uv sync
 
 # Install Git hooks (requires lefthook)
 lefthook install
+
+# CLI commands
+uv run vp-track-status fetch    # Fetch rainfall data
+uv run vp-track-status train    # Train model
+uv run vp-track-status predict  # Generate prediction
 ```
