@@ -2,7 +2,7 @@
 
 Predicts running conditions at Victoria Park Athletics Track based on rainfall.
 
-**[View current track conditions →](https://cdonnerer.github.io/vp-track-status/)**
+[View current track conditions](https://cdonnerer.github.io/vp-track-status/)
 
 ## How It Works
 
