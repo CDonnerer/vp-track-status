@@ -60,6 +60,24 @@ brew install lefthook
 lefthook install
 ```
 
+## Testing
+
+The project uses pytest for testing. Tests cover feature generation and model training:
+
+```bash
+# Run all tests
+uv run pytest tests/
+
+# Run with verbose output
+uv run pytest tests/ -v
+```
+
+Tests run automatically in CI via `.github/workflows/test.yml` on push and pull requests.
+
+Current test coverage:
+- `tests/test_features.py`: Tests rolling window feature generation
+- `tests/test_model.py`: Tests model training and prediction
+
 ## Usage
 
 ### Command-Line Interface

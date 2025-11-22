@@ -23,4 +23,7 @@ lefthook install
 uv run vp-track-status fetch    # Fetch rainfall data
 uv run vp-track-status train    # Train model
 uv run vp-track-status predict  # Generate prediction
+
+# Run tests
+uv run pytest tests/
 ```
