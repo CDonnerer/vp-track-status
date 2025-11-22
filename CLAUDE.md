@@ -14,20 +14,25 @@ The project runs automated daily updates via GitHub Actions, fetching and storin
 vp-track-status/
 ├── src/vp_track_status/       # Installable Python package
 │   ├── __init__.py
+│   ├── cli.py                 # Command-line interface
+│   ├── constants.py           # Configuration constants and file paths
+│   ├── features.py            # Feature engineering utilities
+│   ├── model.py               # Model training and ONNX export
+│   ├── predict.py             # Prediction logic using ONNX models
 │   ├── rainfall.py            # Rainfall data fetching and aggregation
-│   └── cli.py                 # Command-line interface
+│   └── website.py             # Static website generation
 ├── data/                       # Version-controlled data
 │   ├── rainfall/              # Daily rainfall data (CSV)
 │   ├── observations/          # Manual track condition observations (CSV)
-│   └── predictions/           # Model predictions (future)
+│   ├── predictions/           # Model predictions (future)
+│   └── models/                # Trained models
+│       └── track_condition_model.onnx
 ├── scripts/
 │   └── update_data.sh         # Entry point for automated updates
 ├── .github/workflows/
-│   └── update_data.yml        # GitHub Actions workflow for daily updates
-├── rain.py                    # Legacy script (use src/vp_track_status instead)
-├── get_waterfall_data.py      # Legacy script
-├── create_dataset.py          # Legacy script for ML training
-├── maps.py                    # Experimental geospatial tools
+│   ├── update_data.yml        # GitHub Actions workflow for daily updates
+│   ├── deploy_website.yml     # GitHub Pages deployment workflow
+│   └── test.yml               # CI testing workflow
 ├── pyproject.toml             # Package configuration
 ├── lefthook.yml               # Git hooks (ruff check & format)
 └── vicpark_track.geojson      # Track boundary coordinates
@@ -150,14 +155,6 @@ The main package (`src/vp_track_status/`) provides:
    - Deployed to GitHub Pages automatically
    - Updates daily after rainfall data fetch (7 AM UTC)
    - Shows prediction, recent rainfall, and last update time
-
-### Legacy Scripts
-
-Root-level scripts are legacy code from initial development:
-- `rain.py`: Original API wrapper (superseded by `src/vp_track_status/rainfall.py`)
-- `get_waterfall_data.py`: Direct station-based fetcher
-- `create_dataset.py`: ML training pipeline (uses pandas, not integrated with new package)
-- `maps.py`: Experimental Sentinel-1 satellite imagery tools
 
 ### GitHub Pages Deployment
 
