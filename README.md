@@ -2,7 +2,7 @@
 
 Predicts running conditions at Victoria Park Athletics Track based on rainfall.
 
-**[View current track conditions →](https://cdonnerer.github.io/vp-track-status/)**
+[View current track conditions](https://cdonnerer.github.io/vp-track-status/)
 
 ## How It Works
 
@@ -23,4 +23,7 @@ lefthook install
 uv run vp-track-status fetch    # Fetch rainfall data
 uv run vp-track-status train    # Train model
 uv run vp-track-status predict  # Generate prediction
+
+# Run tests
+uv run pytest tests/
 ```
