@@ -78,6 +78,7 @@ Current test coverage:
 - `tests/test_features.py`: Tests rolling window feature generation
 - `tests/test_model.py`: Tests model training and prediction
 - `tests/test_predict.py`: Tests end-to-end prediction with ONNX model
+- `tests/test_rainfall.py`: Tests rainfall data fetching with mocked API
 - `tests/test_website.py`: Tests HTML website generation
 
 ## Usage
