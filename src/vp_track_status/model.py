@@ -1,5 +1,6 @@
 """Train and export track condition prediction model."""
 
+import logging
 from pathlib import Path
 
 import polars as pl
@@ -9,6 +10,8 @@ from skl2onnx.common.data_types import FloatTensorType
 
 from vp_track_status.constants import FEATURE_COLS, LABEL_MAPPING_INVERSE
 from vp_track_status.features import add_rolling_features
+
+logger = logging.getLogger(__name__)
 
 
 def load_and_prepare_data(rainfall_file, observations_file):
@@ -71,13 +74,13 @@ def train_and_export(
 ):
     """Complete pipeline: load data, train model, export to ONNX."""
     df = load_and_prepare_data(rainfall_file, observations_file)
-    print(f"Loaded {len(df)} observations with rainfall data")
+    logger.info(f"Loaded {len(df)} observations with rainfall data")
 
     model, feature_cols = train_model(df, feature_cols)
-    print(f"Trained logistic regression model on {len(df)} samples")
-    print(f"Features: {feature_cols}")
+    logger.info(f"Trained logistic regression model on {len(df)} samples")
+    logger.info(f"Features: {feature_cols}")
 
     output_path = export_to_onnx(model, feature_cols, output_path)
-    print(f"Model exported to {output_path}")
+    logger.info(f"Model exported to {output_path}")
 
     return model, feature_cols
