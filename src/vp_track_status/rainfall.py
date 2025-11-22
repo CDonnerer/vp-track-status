@@ -4,6 +4,7 @@ Fetch rainfall data from UK Environment Agency API.
 Supports fetching historical data and incremental updates with upsert logic.
 """
 
+import logging
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -16,6 +17,8 @@ from vp_track_status.constants import (
     RAINFALL_FILE,
     ROOT_URL,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_station_measures(station_id):
@@ -61,27 +64,25 @@ def get_available_date_range(measure_id):
     return earliest, latest
 
 
-def fetch_rainfall_data(station_id, start_date, end_date, verbose=True):
+def fetch_rainfall_data(station_id, start_date, end_date):
     """
     Fetch all rainfall readings for a station between start_date and end_date.
 
     Returns a Polars DataFrame with columns: dateTime, value
     """
-    if verbose:
-        print(f"Fetching rainfall data for station {station_id}")
-        print(f"Date range requested: {start_date} to {end_date}")
+    logger.info(f"Fetching rainfall data for station {station_id}")
+    logger.info(f"Date range requested: {start_date} to {end_date}")
 
     measures = get_station_measures(station_id)
     if not measures:
         raise ValueError(f"No rainfall measures found for station {station_id}")
 
-    if verbose:
-        print(f"Found {len(measures)} measure(s)")
+    logger.info(f"Found {len(measures)} measure(s)")
 
     # Check available date range
     earliest_available, latest_available = get_available_date_range(measures[0])
-    if earliest_available and latest_available and verbose:
-        print(f"Data available from: {earliest_available} to {latest_available}")
+    if earliest_available and latest_available:
+        logger.info(f"Data available from: {earliest_available} to {latest_available}")
 
     all_readings = []
     for m in measures:
@@ -89,26 +90,24 @@ def fetch_rainfall_data(station_id, start_date, end_date, verbose=True):
         all_readings.extend(readings)
 
     if not all_readings:
-        if verbose:
-            print("\nWARNING: No readings returned for this period")
-            if earliest_available and latest_available:
-                if start_date < earliest_available:
-                    print(
-                        f"  → Requested start date ({start_date}) is before earliest available data ({earliest_available})"
-                    )
-                if end_date > latest_available:
-                    print(
-                        f"  → Requested end date ({end_date}) is after latest available data ({latest_available})"
-                    )
-                print(
-                    f"\n  Try using dates between {earliest_available} and {latest_available}"
+        logger.warning("No readings returned for this period")
+        if earliest_available and latest_available:
+            if start_date < earliest_available:
+                logger.warning(
+                    f"Requested start date ({start_date}) is before earliest available data ({earliest_available})"
                 )
+            if end_date > latest_available:
+                logger.warning(
+                    f"Requested end date ({end_date}) is after latest available data ({latest_available})"
+                )
+            logger.info(
+                f"Try using dates between {earliest_available} and {latest_available}"
+            )
         return pl.DataFrame(schema={"dateTime": pl.Utf8, "value": pl.Float64})
 
-    df = pl.DataFrame(all_readings)
-    if verbose:
-        print(f"Retrieved {len(df)} readings")
-    return df.select(["dateTime", "value"])
+    df_readings = pl.DataFrame(all_readings)
+    logger.info(f"Retrieved {len(df_readings)} readings")
+    return df_readings.select(["dateTime", "value"])
 
 
 def aggregate_daily(df):
@@ -120,7 +119,7 @@ def aggregate_daily(df):
     if df.is_empty():
         return pl.DataFrame(schema={"date": pl.Date, "rainfall_mm": pl.Float64})
 
-    daily = (
+    df_daily = (
         df.with_columns(
             [
                 pl.col("dateTime")
@@ -136,7 +135,7 @@ def aggregate_daily(df):
         .sort("date")
     )
 
-    return daily
+    return df_daily
 
 
 def load_existing_data(output_file):
@@ -145,16 +144,18 @@ def load_existing_data(output_file):
     if not path.exists():
         return pl.DataFrame(schema={"date": pl.Date, "rainfall_mm": pl.Float64})
 
-    df = pl.read_csv(output_file, try_parse_dates=True)
+    df_existing = pl.read_csv(output_file, try_parse_dates=True)
     # Ensure date column is Date type (may already be parsed)
-    if "date" in df.columns and df["date"].dtype != pl.Date:
-        df = df.with_columns(pl.col("date").str.to_date())
+    if "date" in df_existing.columns and df_existing["date"].dtype != pl.Date:
+        df_existing = df_existing.with_columns(pl.col("date").str.to_date())
 
     # Only keep base columns, drop any derived columns (rolling windows)
     base_columns = ["date", "rainfall_mm"]
-    df = df.select([col for col in base_columns if col in df.columns])
+    df_existing = df_existing.select(
+        [col for col in base_columns if col in df_existing.columns]
+    )
 
-    return df
+    return df_existing
 
 
 def upsert_data(existing_df, new_df):
@@ -170,22 +171,21 @@ def upsert_data(existing_df, new_df):
         return existing_df
 
     # Combine and keep latest values (new data overwrites old)
-    combined = (
+    df_combined = (
         pl.concat([existing_df, new_df])
         .unique(subset=["date"], keep="last")
         .sort("date")
     )
 
-    return combined
+    return df_combined
 
 
-def save_data(df, output_file, verbose=True):
+def save_data(df, output_file):
     """Save DataFrame to CSV."""
     path = Path(output_file)
     path.parent.mkdir(parents=True, exist_ok=True)
     df.write_csv(path)
-    if verbose:
-        print(f"Saved {len(df)} daily records to {output_file}")
+    logger.info(f"Saved {len(df)} daily records to {output_file}")
 
 
 def fetch_and_update(
@@ -195,7 +195,6 @@ def fetch_and_update(
     days=7,
     start_date=None,
     end_date=None,
-    verbose=True,
 ):
     """
     Fetch rainfall data and update local CSV file.
@@ -207,7 +206,6 @@ def fetch_and_update(
         days: Number of days to fetch in 'latest' mode
         start_date: Start date for historical mode (YYYY-MM-DD)
         end_date: End date for data fetch (YYYY-MM-DD)
-        verbose: Print progress messages
 
     Returns:
         Final DataFrame after update
@@ -227,57 +225,43 @@ def fetch_and_update(
     else:  # latest mode
         start_date = str(today - timedelta(days=days))
 
-    if verbose:
-        print(f"\n{'=' * 60}")
-        print(f"Rainfall Data Fetch - {mode.upper()} mode")
-        print(f"{'=' * 60}\n")
+    logger.info(f"Rainfall Data Fetch - {mode.upper()} mode")
 
     # Fetch raw data
-    raw_df = fetch_rainfall_data(station_id, start_date, end_date, verbose=verbose)
+    raw_df = fetch_rainfall_data(station_id, start_date, end_date)
 
     # Aggregate to daily
-    if verbose:
-        print("\nAggregating to daily totals...")
+    logger.info("Aggregating to daily totals...")
     daily_df = aggregate_daily(raw_df)
-    if verbose:
-        print(f"Aggregated to {len(daily_df)} days")
+    logger.info(f"Aggregated to {len(daily_df)} days")
 
     # Load existing data
-    if verbose:
-        print(f"\nLoading existing data from {output_file}...")
+    logger.info(f"Loading existing data from {output_file}...")
     existing_df = load_existing_data(output_file)
-    if verbose:
-        print(f"Found {len(existing_df)} existing records")
+    logger.info(f"Found {len(existing_df)} existing records")
 
     # Upsert
-    if verbose:
-        print("\nMerging data...")
+    logger.info("Merging data...")
     final_df = upsert_data(existing_df, daily_df)
 
     # Show summary of changes
-    if verbose:
-        new_records = len(final_df) - len(existing_df)
-        if new_records > 0:
-            print(f"Added {new_records} new record(s)")
+    new_records = len(final_df) - len(existing_df)
+    if new_records > 0:
+        logger.info(f"Added {new_records} new record(s)")
 
-        # Count updated records
-        if not daily_df.is_empty() and not existing_df.is_empty():
-            existing_dates = set(existing_df["date"].to_list())
-            new_dates = set(daily_df["date"].to_list())
-            updated_records = len(existing_dates & new_dates)
-            if updated_records > 0:
-                print(f"Updated {updated_records} existing record(s)")
+    # Count updated records
+    if not daily_df.is_empty() and not existing_df.is_empty():
+        existing_dates = set(existing_df["date"].to_list())
+        new_dates = set(daily_df["date"].to_list())
+        updated_records = len(existing_dates & new_dates)
+        if updated_records > 0:
+            logger.info(f"Updated {updated_records} existing record(s)")
 
     # Save
-    save_data(final_df, output_file, verbose=verbose)
+    save_data(final_df, output_file)
 
-    if verbose:
-        # Show recent data
-        print("\nMost recent data:")
-        print(final_df.tail(10))
-
-        print(f"\n{'=' * 60}")
-        print("SUCCESS")
-        print(f"{'=' * 60}\n")
+    # Show recent data
+    logger.info(f"Most recent data:\n{final_df.tail(10)}")
+    logger.info("Data fetch completed successfully")
 
     return final_df
